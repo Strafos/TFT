@@ -1,4 +1,5 @@
 import random
+import statistics
 
 from utils import *
 
@@ -55,6 +56,8 @@ class GameState():
         self.flop = []
         self.board = board
 
+        self.roll_count = 0
+
     def get_flop(self):
         return self.flop
 
@@ -78,9 +81,10 @@ class GameState():
         roll_cost = [self.roll_cost() for i in range(5)]
         roll_champions = [{"name" : self.pool.draw(cost), "cost" : cost} for cost in roll_cost]
         self.flop = roll_champions
+        self.roll_count += 1
 
     def buy(self, champion):
-        flop_names = [champ["name"] for champ in flop]
+        flop_names = [champ["name"] for champ in self.flop]
         if champion["name"] not in flop_names:
             raise Exception("Tried to buy champion not on the flop")
 
@@ -97,7 +101,7 @@ class GameState():
                 break
 
         # Add it to the board
-        self.board.append[champion]
+        self.board.append(champion)
 
         # Update the pool
         self.pool.pick(champion)
@@ -116,24 +120,149 @@ class GameState():
         # Update the pool
         self.pool.put(champion)
 
-# You are lv 6 with 50 gold and trying to find a single Ashe
-# What is the +EV in gold if you pick up every tier 3 unit along the way?
-def experiment1():
-    gs = GameState(level=6, gold=50, board=[])
+# This algorithm buys any lv3 unit until it finds an ashe
+def bot1():
+    gs = GameState(level=6, gold=100, board=[])
+    found = 0
 
-    while gs.gold >= 5:
+    while gs.gold >= 5 and not found:
         # roll,
         gs.roll()
         flop = gs.get_flop()
         for champ in flop:
-            if champ["cost"] == 3:
+            if champ["cost"] == 3 and len(gs.board) < 10:
                 gs.buy(champ)
 
-        board = [champion["name"] for champion in gs.board]
-        if "Ashe" in board:
-            # Hacky way of counting total gold
-            # Because otherwise, if we buy two ashes in one go, need to do checks
-            gs.gold += len(board) * 3
-            return gs.gold
+            if "Ashe" == champ["name"]:
+                found = 1
 
-print(experiment1)
+    return gs.roll_count
+
+# This algorithm rolls until it finds an ashe
+def bot2():
+    gs = GameState(level=6, gold=100, board=[])
+    found = 0
+
+    while gs.gold >= 5 and not found:
+        gs.roll()
+        for champ in gs.get_flop():
+            if "Ashe" == champ["name"]:
+                found = 1
+                break
+
+    return gs.roll_count
+
+# You are lv 6 with 100 gold and trying to find a single Ashe
+# What is the +EV in gold if you pick up every tier 3 unit along the way?
+def experiment1():
+    tot1 = []
+    for i in range(100000):
+        tot1.append(bot1())
+
+
+    tot2 = []
+    for i in range(100000):
+        tot2.append(bot2())
+
+    print("Avg rolls method1: ", sum(tot1)/100000)
+    print("Avg rolls method2: ", sum(tot2)/100000)
+    print("Stdev method1: ", statistics.stdev(tot1))
+    print("Stdev method2: ", statistics.stdev(tot2))
+
+
+# This algorithm buys any lv3 unit until it finds an ashe
+def bot3():
+    gs = GameState(level=7, gold=400, board=[])
+    found = 0
+
+    while gs.gold >= 5 and not found:
+        gs.roll()
+        for champ in gs.get_flop():
+            if champ["cost"] == 4 and len(gs.board) < 10:
+                gs.buy(champ)
+
+            if "Cho'gath" == champ["name"]:
+                found = 1
+
+    return gs.roll_count
+
+# This algorithm rolls until it finds an ashe
+def bot4():
+    gs = GameState(level=7, gold=400, board=[])
+    found = 0
+
+    while gs.gold >= 5 and not found:
+        gs.roll()
+        for champ in gs.get_flop():
+            if "Cho'gath" == champ["name"]:
+                found = 1
+                break
+
+    return gs.roll_count
+
+# You are lv 7 with 400 gold and trying to find a single Cho
+# What is the +EV in gold if you pick up every tier 4 unit along the way?
+def experiment2():
+    tot1 = []
+    for i in range(100000):
+        tot1.append(bot3())
+
+
+    tot2 = []
+    for i in range(100000):
+        tot2.append(bot4())
+
+    print("Avg rolls method1: ", sum(tot1)/100000)
+    print("Avg rolls method2: ", sum(tot2)/100000)
+    print("Stdev method1: ", statistics.stdev(tot1))
+    print("Stdev method2: ", statistics.stdev(tot2))
+
+# This algorithm buys any lv3 unit until it finds an ashe
+def bot5():
+    gs = GameState(level=8, gold=400, board=[])
+    found = 0
+
+    while gs.gold >= 5 and not found:
+        gs.roll()
+        for champ in gs.get_flop():
+            if champ["cost"] == 5 and len(gs.board) < 10:
+                gs.buy(champ)
+
+            if "Kayle" == champ["name"]:
+                found = 1
+
+    return gs.roll_count
+
+# This algorithm rolls until it finds an ashe
+def bot6():
+    gs = GameState(level=8, gold=400, board=[])
+    found = 0
+
+    while gs.gold >= 5 and not found:
+        gs.roll()
+        for champ in gs.get_flop():
+            if "Kayle" == champ["name"]:
+                found = 1
+                break
+
+    return gs.roll_count
+
+# You are lv 7 with 400 gold and trying to find a single Cho
+# What is the +EV in gold if you pick up every tier 4 unit along the way?
+def experiment3():
+    tot1 = []
+    for i in range(100000):
+        tot1.append(bot5())
+
+    tot2 = []
+    for i in range(100000):
+        tot2.append(bot6())
+
+    print("Avg rolls method1: ", sum(tot1)/100000)
+    print("Avg rolls method2: ", sum(tot2)/100000)
+    print("Stdev method1: ", statistics.stdev(tot1))
+    print("Stdev method2: ", statistics.stdev(tot2))
+
+experiment1()
+experiment2()
+experiment3()
