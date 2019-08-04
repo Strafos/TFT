@@ -36,6 +36,13 @@ class POOL():
         self.remaining_by_cost[cost] -= 1
         self.remaining_by_unit[name] -= 1
 
+    def put(self, champion):
+        name = champion["name"]
+        cost = champion["cost"]
+
+        self.remaining_by_cost[cost] += 1
+        self.remaining_by_unit[name] += 1
+
 
 # How important are blockers?
 # -- You have 50 gold and you are rolling for Ashe, how much do your chances
@@ -89,17 +96,44 @@ class GameState():
                 self.flop[i] = {'name' : "Taken", 'cost' : -1}
                 break
 
+        # Add it to the board
+        self.board.append[champion]
+
         # Update the pool
         self.pool.pick(champion)
+
+    def sell(self, champion):
+        board_names = [champ["name"] for champ in self.board]
+        if champion["name"] not in board_names:
+            raise Exception("Tried to selff champion not on the board")
+
+        # Update gold
+        self.gold += champion["cost"]
+
+        # Update the board
+        self.board.remove(board_names.index(champion["name"]))
+
+        # Update the pool
+        self.pool.put(champion)
 
 # You are lv 6 with 50 gold and trying to find a single Ashe
 # What is the +EV in gold if you pick up every tier 3 unit along the way?
 def experiment1():
     gs = GameState(level=6, gold=50, board=[])
-    gs.roll()
-    flop = gs.get_flop()
-    print(flop)
-    for champ in flop:
-        if champ["cost"] == 3:
-            gs.buy(champ)
-            print(gs.get_flop())
+
+    while gs.gold >= 5:
+        # roll,
+        gs.roll()
+        flop = gs.get_flop()
+        for champ in flop:
+            if champ["cost"] == 3:
+                gs.buy(champ)
+
+        board = [champion["name"] for champion in gs.board]
+        if "Ashe" in board:
+            # Hacky way of counting total gold
+            # Because otherwise, if we buy two ashes in one go, need to do checks
+            gs.gold += len(board) * 3
+            return gs.gold
+
+print(experiment1)
